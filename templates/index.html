@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Sentiment Analyzer</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+        }
+        .box {
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            margin: 20px auto;
+        }
+        .positive {
+            background-color: #28a745;
+        }
+        .negative {
+            background-color: #dc3545;
+        }
+        .neutral {
+            background-color: #ffc107;
+        }
+        .hidden {
+            display: none;
+        }
+        .btn-info {
+            font-size: 16px;
+            padding: 10px 20px;
+            border-radius: 25px;
+        }
+        h1, h2, h3 {
+            font-family: 'Georgia', serif;
+        }
+        canvas {
+            margin: 20px auto;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function toggleComments() {
+            var commentsDiv = document.getElementById('comments-section');
+            commentsDiv.classList.toggle('hidden');
+        }
+    </script>
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand" href="#">Crypto Sentiment Analyzer</a>
+    </nav>
+    
+    <div class="container mt-5">
+        <h2 class="text-center">Select the cryptocurrency and site for sentiment analysis</h2>
+        
+        <!-- Form box -->
+        <div class="box">
+            <form method="POST" action="/">
+                <div class="form-group">
+                    <label for="crypto">Select Cryptocurrency:</label>
+                    <select class="form-control" id="crypto" name="crypto" required>
+                        <option value="">--Select Cryptocurrency--</option>
+                        <option value="bitcoin">Bitcoin</option>
+                        <option value="ethereum">Ethereum</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="site">Select Site:</label>
+                    <select class="form-control" id="site" name="site" required>
+                        <option value="">--Select Site--</option>
+                        <option value="telegraph">Telegraph</option>
+                        <option value="bbc">BBC</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Start Analysis</button>
+            </form>
+        </div>
+
+        <!-- Sentiment Analysis Results -->
+        {% if results %}
+        <div class="mt-5 text-center box">
+            <h2>Sentiment Analysis Results</h2>
+            
+            <!-- Pie Chart Canvas -->
+            <canvas id="sentimentChart"></canvas>
+
+            <!-- Show Comments Button -->
+            <button class="btn btn-info" onclick="toggleComments()">Show Comments</button>
+
+            <!-- Comments Section -->
+            <div id="comments-section" class="hidden mt-4 box">
+                <h3>Comments</h3>
+                <table class="table table-bordered">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Headline</th>
+                            <th>Sentiment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr>
+                            <td>{{ result.headline }}</td>
+                            <td>{{ result.sentiment }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Sentiment data from the backend
+        const totalComments = {{ total_comments }};
+        const positiveComments = {{ positive_comments }};
+        const negativeComments = {{ negative_comments }};
+        const neutralComments = {{ neutral_comments }};
+
+        // Create the pie chart using Chart.js
+        const ctx = document.getElementById('sentimentChart').getContext('2d');
+        const sentimentChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Positive', 'Negative', 'Neutral'],
+                datasets: [{
+                    data: [positiveComments, negativeComments, neutralComments],
+                    backgroundColor: ['#28a745', '#dc3545', '#ffc107'],  // Colors for positive, negative, and neutral
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                const sentiment = tooltipItem.label;
+                                const value = tooltipItem.raw;
+                                const percentage = ((value / totalComments) * 100).toFixed(2);
+                                return `${sentiment}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
