@@ -18,6 +18,10 @@ URLS = {
     'bbc': {
         'bitcoin': 'https://www.bbc.com/news/topics/c734j90em14t',
         'ethereum': 'https://www.bbc.com/news/topics/c734j90em14t'  # Örnek URL, gerçek URL ile güncelle
+    },
+    'cointelegraph': {
+        'bitcoin': 'https://cointelegraph.com/tags/bitcoin',
+        'ethereum': 'https://cointelegraph.com/tags/ethereum'
     }
 }
 
@@ -45,7 +49,7 @@ def index():
         except KeyError as e:
             logging.error(f"KeyError: {str(e)} - Site: {site}, Crypto: {crypto}")
             return "Invalid site or cryptocurrency selection.", 400
-        
+
         # HTTP isteği için headers
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
@@ -65,18 +69,27 @@ def index():
             # HTML içeriği parse etme
             soup = BeautifulSoup(response.content, 'html.parser')
 
-            # Siteye göre scraping işlemi
+            # Telegraph için scraping işlemi
             if site == 'telegraph':
-                articles = soup.find_all('article', class_='card')
+                articles = soup.find_all('a', class_='list-headline__link')
                 for article in articles:
                     title = article.find('span', class_='u-heading-6 list-headline__text')
                     if title:
                         results.append({'headline': title.text.strip()})
 
+            # BBC için scraping işlemi
             elif site == 'bbc':
-                articles = soup.find_all('div', class_='sc-ae29827d-3')
+                articles = soup.find_all('div', class_='sc-ae29827d-6')
                 for article in articles:
-                    title = article.find('h2', class_='sc-4fedabc7-3')
+                    title = article.find('h2', class_='sc-1207bea1-3')
+                    if title:
+                        results.append({'headline': title.text.strip()})
+
+            # Cointelegraph için scraping işlemi
+            elif site == 'cointelegraph':
+                articles = soup.find_all('div', class_='post-card-inline__content')
+                for article in articles:
+                    title = article.find('a', class_='post-card-inline__title-link')
                     if title:
                         results.append({'headline': title.text.strip()})
 
